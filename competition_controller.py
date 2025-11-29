@@ -14,6 +14,8 @@ class ThreatController(KesslerController):
         bullet_time = ctrl.Antecedent(np.arange(0, 3.0, 0.1), 'bullet_time')
         theta_delta = ctrl.Antecedent(np.arange(-1*math.pi, math.pi, 0.1), 'theta_delta')
         ship_turn = ctrl.Consequent(np.arange(-180, 180, 1), 'ship_turn')
+        dist_move = ctrl.Consequent(np.arange(0, 2.0, 0.1), 'move_dist')
+        closest_dist = ctrl.Antecedent(np.arange(0, 2000, 10), 'closest_dist')
 
         # --- Fuzzy Sets ---
         bullet_time['S'] = fuzz.trimf(bullet_time.universe, [0, 0, 1.0])
@@ -36,6 +38,15 @@ class ThreatController(KesslerController):
         ship_turn['Right']      = fuzz.trimf(ship_turn.universe, [0, 45, 90])
         ship_turn['Hard_Right'] = fuzz.trimf(ship_turn.universe, [90, 180, 180])
 
+        dist_move['S'] = fuzz.trimf(dist_move.universe, [0.1, 0.2, 0.5])
+        dist_move['M'] = fuzz.trimf(dist_move.universe, [0.4, 1.0, 1.4])
+        dist_move['L'] = fuzz.trimf(dist_move.universe, [1.2, 1.5, 2.0])
+
+        closest_dist['Danger_Close'] = fuzz.trimf(closest_dist.universe, [0, 0, 300])
+        closest_dist['Near'] = fuzz.trimf(closest_dist.universe, [200, 500, 900])
+        closest_dist['Far'] = fuzz.trimf(closest_dist.universe, [800, 1500, 2000])
+
+
         # --- Fuzzy Rules ---
         self.targeting_control = ctrl.ControlSystem()
         
@@ -54,7 +65,10 @@ class ThreatController(KesslerController):
         self.targeting_control.addrule(ctrl.Rule(theta_delta['P_Fine'] & bullet_time['L'], ship_turn['Nudge_Right']))
         self.targeting_control.addrule(ctrl.Rule(theta_delta['N_Fine'] & bullet_time['M'], ship_turn['Nudge_Left']))
         self.targeting_control.addrule(ctrl.Rule(theta_delta['P_Fine'] & bullet_time['M'], ship_turn['Nudge_Right']))
-        
+        self.targeting_control.addrule(ctrl.Rule(closest_dist['Danger_Close'], dist_move['L']))
+        self.targeting_control.addrule(ctrl.Rule(closest_dist['Near'], dist_move['M']))
+        self.targeting_control.addrule(ctrl.Rule(closest_dist['Far'], dist_move['S']))
+
         # Stop
         self.targeting_control.addrule(ctrl.Rule(theta_delta['Z'], ship_turn['Stop']))
 
@@ -192,13 +206,15 @@ class ThreatController(KesslerController):
             sim = ctrl.ControlSystemSimulation(self.targeting_control, flush_after_run=1)
             sim.input['bullet_time'] = min(primary_time, 3.0)
             sim.input['theta_delta'] = primary_error
+            sim.input['closest_dist'] = min(closest_dist_fallback, 2000)
             try:
                 sim.compute()
                 turn_rate = sim.output['ship_turn']
+                move_amount = sim.output['move_dist']
             except:
                 turn_rate = 0
         else:
-            turn_rate = 0
+            turn_rate = 0.2
 
         # ----------------------------------------
         # 3. OPPORTUNITY FIRING (Check EVERYTHING)
@@ -229,8 +245,18 @@ class ThreatController(KesslerController):
             if dist < (ship_radius + a["radius"] + 15):
                 fire = True
                 break
+        # ----------------------------------------
+        # 4. Distance
+        # ----------------------------------------
 
-        thrust = 0.0
+        print(move_amount*1000)
+        dx = target_asteroid["position"][0] - ship_pos[0]
+        dy = target_asteroid["position"][1] - ship_pos[1]
+
+        if dx < 15 or dy < 15:
+            thrust = -np.clip(move_amount*1000, 0, 1000)
+        else:
+            thrust = np.clip(move_amount*1000, 0, 1000)
         drop_mine = False
         self.eval_frames += 1
 
