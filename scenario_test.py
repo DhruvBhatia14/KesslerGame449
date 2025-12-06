@@ -7,9 +7,14 @@ import time
 
 from kesslergame import Scenario, KesslerGame, GraphicsType
 from test_controller import TestController
-from competition_controller import ThreatController
 from scott_dick_controller import ScottDickController
 from graphics_both import GraphicsBoth
+from geneticapproach1 import NewControllerInTown
+from competition_controller import ThreatController
+from genetic_attempt import TunableScottDickController, load_chromosome
+
+# Load trained chromosome from database (run genetic_attempt.py first to train)
+trained_chromosome = load_chromosome()
 
 # Define game scenario
 my_test_scenario = Scenario(name='Test Scenario',
@@ -17,7 +22,7 @@ my_test_scenario = Scenario(name='Test Scenario',
                             ship_states=[
                                 {'position': (
                                     400, 400), 'angle': 90, 'lives': 3, 'team': 1, "mines_remaining": 3},
-                                # {'position': (400, 600), 'angle': 90, 'lives': 3, 'team': 2, "mines_remaining": 3},
+                                {'position': (400, 600), 'angle': 90, 'lives': 3, 'team': 2, "mines_remaining": 3},
                             ],
                             map_size=(1000, 800),
                             time_limit=60,
@@ -35,10 +40,9 @@ game_settings = {'perf_tracker': True,
 game = KesslerGame(settings=game_settings)
 # game = TrainerEnvironment(settings=game_settings)  # Use this for max-speed, no-graphics simulation
 
-# Evaluate the game
 pre = time.perf_counter()
-score, perf_data = game.run(scenario=my_test_scenario, controllers=[
-                            ThreatController()])
+
+score, perf_data = game.run(scenario=my_test_scenario, controllers=[TunableScottDickController(trained_chromosome), ScottDickController()])
 
 # Print out some general info about the result
 print('Scenario eval time: '+str(time.perf_counter()-pre))
