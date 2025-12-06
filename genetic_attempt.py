@@ -474,3 +474,9 @@ class GeneticTrainer:
             print(f"Best Chromosome: {self.best_chromosome}")
         
         return self.best_chromosome
+
+if __name__ == "__main__":
+    trainer = GeneticTrainer()
+    best = trainer.train(verbose=True)
+    trainer.save()
+    print(f"\nBest chromosome saved to database.")
