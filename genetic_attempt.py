@@ -474,6 +474,11 @@ class GeneticTrainer:
             print(f"Best Chromosome: {self.best_chromosome}")
         
         return self.best_chromosome
+    
+    def save(self, name=None):
+        if self.best_chromosome is None:
+            raise ValueError("No chromosome to save. Run train() first.")
+        save_chromosome(self.best_chromosome, fitness=self.best_fitness, name=name)
 
 if __name__ == "__main__":
     trainer = GeneticTrainer()

@@ -9,7 +9,6 @@ from kesslergame import Scenario, KesslerGame, GraphicsType
 from test_controller import TestController
 from scott_dick_controller import ScottDickController
 from graphics_both import GraphicsBoth
-from geneticapproach1 import NewControllerInTown
 from competition_controller import ThreatController
 from genetic_attempt import TunableScottDickController, load_chromosome
 
