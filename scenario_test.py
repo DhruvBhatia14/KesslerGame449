@@ -10,7 +10,7 @@ from test_controller import TestController
 from scott_dick_controller import ScottDickController
 from graphics_both import GraphicsBoth
 from competition_controller import ThreatController
-from genetic_attempt import TunableScottDickController, load_chromosome
+from genetic_attempt_with_mines import TunableScottDickController, load_chromosome
 
 # Load trained chromosome from database (run genetic_attempt.py first to train)
 trained_chromosome = load_chromosome()
@@ -21,7 +21,8 @@ my_test_scenario = Scenario(name='Test Scenario',
                             ship_states=[
                                 {'position': (
                                     400, 400), 'angle': 90, 'lives': 3, 'team': 1, "mines_remaining": 3},
-                                {'position': (400, 600), 'angle': 90, 'lives': 3, 'team': 2, "mines_remaining": 3},
+                                {'position': (
+                                    400, 600), 'angle': 90, 'lives': 3, 'team': 2, "mines_remaining": 3},
                             ],
                             map_size=(1000, 800),
                             time_limit=60,
@@ -41,7 +42,8 @@ game = KesslerGame(settings=game_settings)
 
 pre = time.perf_counter()
 
-score, perf_data = game.run(scenario=my_test_scenario, controllers=[TunableScottDickController(trained_chromosome), ScottDickController()])
+score, perf_data = game.run(scenario=my_test_scenario, controllers=[
+                            TunableScottDickController(trained_chromosome), ScottDickController()])
 
 # Print out some general info about the result
 print('Scenario eval time: '+str(time.perf_counter()-pre))
